@@ -1,0 +1,884 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Wasted Poker House Ledger</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  color-scheme: dark;
+  --bg:#000000; --s1:#0f0f10; --s2:#161617; --s3:#1f1f21; --line:#262628; --line2:#353538;
+  --felt1:#1f7149; --felt2:#114a32; --felt3:#08281b;
+  --gold:#dcbb6e; --gold2:#bf9b4f; --gold-deep:#6b5629;
+  --ink:#f4efe3; --soft:#c7c1b3; --muted:#8a857b;
+  --win:#63d69d; --loss:#ff7b74; --amber:#f0c55c;
+  --disp:"Big Shoulders Display", "Oswald", "Arial Narrow", Impact, sans-serif;
+  --sans:"Instrument Sans", "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif;
+  --bar:86px;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){ --bg:#000000; --ink:#f4efe3; } }
+:root[data-theme="dark"]{ --bg:#000000; --ink:#f4efe3; }
+html{scroll-padding-top:env(safe-area-inset-top,0px);scroll-padding-bottom:calc(var(--bar) + 20px);-webkit-text-size-adjust:100%}
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.45;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;
+  background-image:radial-gradient(120% 340px at 50% 0, rgba(31,113,73,.22), transparent 70%)}
+button,input{font:inherit;color:inherit}
+button{touch-action:manipulation}
+:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+.num{font-family:var(--disp);font-variant-numeric:tabular-nums;letter-spacing:.01em}
+
+.wrap{max-width:480px;margin:0 auto;padding:18px 16px calc(var(--bar) + 40px + env(safe-area-inset-bottom,0px))}
+
+/* ---------- header ---------- */
+.top{display:grid;grid-template-columns:1fr auto;gap:12px 10px;align-items:center}
+.brand{grid-column:1 / -1;display:flex;gap:12px;align-items:center}
+.mark{flex:none;width:44px;height:44px;border-radius:50%;display:grid;place-items:center;font-size:20px;color:#14110a;
+  background:radial-gradient(circle, var(--gold) 0 46%, #fff6dc 47% 50%, var(--gold) 51% 60%, transparent 61%),
+    repeating-conic-gradient(var(--gold) 0 30deg, #111 30deg 45deg);
+  box-shadow:0 0 0 1.5px #000, 0 4px 14px rgba(0,0,0,.6)}
+h1{font-family:var(--disp);font-weight:800;text-transform:uppercase;font-size:1.72rem;line-height:.95;letter-spacing:.015em;margin:0;color:var(--ink)}
+h1 span{display:block;color:var(--gold);font-weight:700;font-size:.62em;letter-spacing:.32em;margin-top:3px}
+.subbar{min-width:0}
+.gamename{display:block;width:100%;background:transparent;border:0;border-bottom:1px dashed transparent;padding:2px 0;color:var(--soft);font-size:1rem;font-weight:500;text-overflow:ellipsis}
+.gamename:focus{outline:none;border-bottom-color:var(--gold);color:var(--ink)}
+.savestate{font-size:.76rem;color:var(--muted);display:inline-flex;align-items:center;gap:6px}
+.savestate i{width:6px;height:6px;border-radius:50%;background:var(--muted)}
+.savestate.ok i{background:var(--win)} .savestate.busy i{background:var(--amber)}
+.session{display:flex;gap:6px}
+
+/* ---------- felt ---------- */
+.table{
+  --fa:var(--felt1); --fb:var(--felt2); --fc:var(--felt3);
+  margin:18px 0 0;border-radius:44px;padding:22px 16px 18px;position:relative;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.35'/%3E%3C/svg%3E"),
+    radial-gradient(ellipse 90% 80% at 50% 30%, var(--fa), var(--fb) 60%, var(--fc));
+  border:10px solid #0b0b0b;
+  box-shadow:inset 0 0 0 1px rgba(220,187,110,.6), inset 0 0 0 5px rgba(0,0,0,.15), inset 0 16px 34px rgba(0,0,0,.4), 0 0 0 1px #262626, 0 26px 50px -22px rgba(0,0,0,1);
+  transition:background .5s ease;
+}
+.table.short{--fa:#7d2328;--fb:#4b1418;--fc:#280a0c}
+.figs{display:grid;grid-template-columns:1fr 1fr;gap:4px 8px}
+.fig{text-align:center}
+.fig.mid{grid-column:1 / -1;order:-1;margin-bottom:10px}
+.fig .k{font-size:.76rem;font-weight:500;color:rgba(244,239,227,.7)}
+.fig .v{font-family:var(--disp);font-weight:700;font-size:1.75rem;line-height:1.05;font-variant-numeric:tabular-nums;color:var(--ink)}
+.fig .s{font-size:.72rem;color:rgba(244,239,227,.58)}
+.fig.mid .v{font-size:3.6rem;font-weight:800;color:var(--gold);line-height:1;text-shadow:0 2px 14px rgba(0,0,0,.35)}
+.fig.mid .v.pend{color:rgba(244,239,227,.42);font-weight:600;font-size:2.6rem}
+.print{margin:14px 4px 0;text-align:center;padding-top:12px;border-top:1px dashed rgba(220,187,110,.4)}
+.print .st{font-family:var(--disp);font-weight:700;letter-spacing:.07em;font-size:1.05rem;color:var(--gold);line-height:1.2}
+.table.await .print .st{color:var(--amber)}
+.table.adj .print .st{color:#ffe2a8}
+.table.short .print .st{color:#ffd9d3}
+.table.empty .print .st{color:rgba(244,239,227,.6);letter-spacing:.03em;font-weight:600}
+.print small{display:block;margin-top:4px;font-size:.8rem;color:rgba(244,239,227,.75)}
+
+/* ---------- buttons ---------- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:48px;padding:0 18px;border-radius:14px;
+  border:1px solid var(--line2);background:var(--s3);color:var(--ink);font-weight:600;cursor:pointer;white-space:nowrap;transition:background .15s,border-color .15s,transform .08s}
+.btn:active{transform:scale(.98)}
+.btn.felt{background:linear-gradient(180deg,#24804f,#176040);border-color:#2f9563;color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.14)}
+.btn.gold{background:linear-gradient(180deg,#e6c681,#c8a457);border-color:#ecd08f;color:#19140a;box-shadow:inset 0 1px 0 rgba(255,255,255,.4)}
+.btn.quiet{background:transparent;border-color:transparent;color:var(--soft)}
+.btn.goldline{background:rgba(220,187,110,.08);border-color:var(--gold-deep);color:var(--gold)}
+.btn.warnline{background:transparent;border-color:#4a2422;color:#f3aaa4}
+.btn.danger{background:#5a1c1c;border-color:#7c2a28;color:#ffe1de}
+.btn.sm{min-height:42px;padding:0 14px;font-size:.92rem;border-radius:12px}
+.btn.xs{min-height:36px;padding:0 12px;font-size:.84rem;border-radius:10px}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.plus{font-size:1.2em;line-height:0;margin-top:-1px;font-weight:500}
+
+/* ---------- dock ---------- */
+.dock{position:fixed;left:0;right:0;bottom:0;z-index:20;padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px));
+  background:rgba(10,10,10,.82);-webkit-backdrop-filter:blur(14px) saturate(140%);backdrop-filter:blur(14px) saturate(140%);
+  border-top:1px solid rgba(255,255,255,.06)}
+.dock-in{max-width:448px;margin:0 auto;display:grid;grid-template-columns:1fr 1.15fr;gap:10px}
+.dock .btn{min-width:0;min-height:54px;padding:0 8px;font-size:.98rem;white-space:normal;line-height:1.15;text-align:center;border-radius:16px}
+.dock .btn:disabled{opacity:1;background:#1a1a1b;border-color:#29292b;color:#59564f;box-shadow:none}
+
+/* ---------- players ---------- */
+.sect{display:flex;justify-content:space-between;align-items:baseline;margin:26px 2px 10px}
+.sect h2{font-family:var(--disp);font-weight:700;text-transform:uppercase;letter-spacing:.06em;font-size:1.2rem;margin:0}
+.sect span{font-size:.82rem;color:var(--muted)}
+.ledger{display:grid;gap:10px}
+.prow{background:linear-gradient(180deg,var(--s2),var(--s1));border:1px solid var(--line);border-radius:20px;padding:14px;
+  display:grid;grid-template-columns:1fr auto;grid-template-areas:"who net" "figs figs" "fin act";gap:12px 10px}
+.prow.done{border-color:#1e3a2c}
+.p-who{grid-area:who;display:flex;align-items:center;gap:11px;min-width:0}
+.p-net{grid-area:net;text-align:right;align-self:center}
+.p-figs{grid-area:figs;display:grid;grid-template-columns:1fr 1fr 1fr;background:#0a0a0a;border:1px solid #202022;border-radius:12px}
+.p-fig{padding:8px 10px;font-variant-numeric:tabular-nums;color:var(--soft);font-size:.95rem;font-weight:500}
+.p-fig+.p-fig{border-left:1px solid #202022}
+.p-fig::before{content:attr(data-l);display:block;font-size:.7rem;font-weight:400;color:var(--muted)}
+.p-inv{color:var(--ink);font-weight:700}
+.p-fig small{color:var(--muted);font-size:.72rem;margin-left:3px;font-weight:400}
+.p-fin{grid-area:fin;position:relative}
+.p-act{grid-area:act;display:flex;align-items:center}
+.seat{--c:#c9a24a;--t:#1a1408;flex:none;width:38px;height:38px;border-radius:50%;display:grid;place-items:center;font-family:var(--disp);font-weight:800;font-size:1rem;color:var(--t);
+  background:radial-gradient(circle, var(--c) 0 46%, rgba(255,255,255,.6) 47% 50%, var(--c) 51% 60%, transparent 61%),
+    repeating-conic-gradient(var(--c) 0 30deg, #efe8d6 30deg 45deg);
+  box-shadow:0 0 0 1.5px #000, 0 3px 10px rgba(0,0,0,.6)}
+.seat.done{--c:#1f7a50;--t:#fff}
+.pname{background:none;border:0;padding:0;font-weight:700;font-size:1.12rem;cursor:pointer;text-align:left;color:var(--ink);display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.state{display:inline-flex;align-items:center;gap:5px;font-size:.76rem;font-weight:500;color:var(--amber)}
+.state::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.state.done{color:#86d4ab}
+.cur{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--muted);font-weight:600;pointer-events:none}
+.stack{width:100%;min-height:50px;padding:8px 14px 8px 30px;text-align:left;border-radius:14px;border:1px solid var(--line2);background:#070707;
+  font-family:var(--disp);font-variant-numeric:tabular-nums;font-weight:700;font-size:1.4rem;letter-spacing:.02em;transition:border-color .15s, box-shadow .15s}
+.stack::placeholder{font-family:var(--sans);font-size:.95rem;color:#6c685f;font-weight:500;letter-spacing:0}
+.stack:focus{border-color:var(--gold);outline:none;box-shadow:0 0 0 3px rgba(220,187,110,.2)}
+.stack.set{border-color:#2b6a4c;background:#08130d}
+.stack.bad{border-color:var(--loss)}
+.p-act .btn{min-height:50px;border-radius:14px}
+.netv{font-family:var(--disp);font-weight:800;font-size:1.85rem;line-height:1;white-space:nowrap;font-variant-numeric:tabular-nums}
+.pos{color:var(--win)} .neg{color:var(--loss)} .zero{color:var(--ink)}
+.na{font-family:var(--sans);font-size:.88rem;color:var(--muted);font-weight:500;font-style:italic}
+.adjn{display:block;font-size:.7rem;color:var(--muted);margin-top:3px;white-space:nowrap}
+.link{background:none;border:0;color:var(--muted);cursor:pointer;padding:8px 6px;font-size:.9rem;text-decoration:underline;text-underline-offset:3px;text-decoration-color:#444}
+.p-act .link{display:none}
+.ptot{background:transparent;border:1px dashed var(--gold-deep);grid-template-areas:"who net" "figs figs"}
+.ptot .p-who{font-family:var(--disp);font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--gold);font-size:1.05rem}
+.ptot .p-figs{background:transparent}
+.ptot .netv{font-size:1.5rem}
+.empty-state{padding:40px 20px;text-align:center;border:1px dashed var(--line2);border-radius:20px}
+.empty-state h2{font-family:var(--disp);font-weight:700;text-transform:uppercase;letter-spacing:.05em;font-size:1.5rem;margin:0 0 6px}
+.empty-state p{margin:0;color:var(--muted)}
+.under{display:flex;justify-content:center;margin-top:14px}
+.lhead{display:none}
+
+/* ---------- panels ---------- */
+.panel{margin-top:16px;background:var(--s2);border:1px solid var(--line);border-radius:20px;padding:16px}
+.panel h2{font-family:var(--disp);font-weight:700;text-transform:uppercase;letter-spacing:.06em;font-size:1.25rem;margin:0;color:var(--ink)}
+.panel .head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:4px}
+.settle{border-color:var(--gold-deep);background:linear-gradient(180deg,#1a1710,var(--s1))}
+.note{padding:12px 14px;border-radius:12px;margin:10px 0;font-size:.92rem}
+.note.wait{background:#1f1a0d;color:#f0d796}
+.note.bad{background:#2a1110;color:#ffd0cb}
+.note.good{background:#0c2318;color:#b9ecd0}
+.pays{list-style:none;margin:4px 0;padding:0}
+.pays li{display:grid;grid-template-columns:1fr auto;align-items:center;gap:12px;padding:12px 0;border-bottom:1px dashed var(--line2)}
+.pays li:last-child{border-bottom:0}
+.pays .who2{font-size:1.02rem;color:var(--soft)}
+.pays .who2 b{color:var(--ink)}
+.pays .amt2{font-family:var(--disp);font-weight:800;font-size:1.7rem;color:var(--gold);font-variant-numeric:tabular-nums}
+.pays .net{font-family:var(--disp);font-weight:800;font-size:1.6rem}
+.pays .net.na{font-family:var(--sans);font-size:.88rem}
+.settle .btn.wide{width:100%}
+details.panel summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:10px;min-height:32px}
+details.panel summary::-webkit-details-marker{display:none}
+details.panel summary .tw{color:var(--muted);font-size:.88rem;display:inline-flex;align-items:center;gap:8px}
+details.panel summary .tw::after{content:"";width:8px;height:8px;border-right:1.5px solid var(--muted);border-bottom:1.5px solid var(--muted);transform:rotate(45deg) translateY(-3px);transition:transform .2s}
+details[open].panel summary .tw::after{transform:rotate(-135deg) translateY(-1px)}
+details[open] summary{margin-bottom:6px}
+.hist{list-style:none;margin:0;padding:0}
+.hist li{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:13px 0;border-top:1px solid var(--line)}
+.hist .gname{font-weight:600}
+.hist .meta{color:var(--muted);font-size:.84rem;margin-top:2px}
+.hist .flag{font-size:.76rem;margin-left:8px;color:var(--muted)}
+.hist .flag.bad{color:var(--loss)} .hist .flag.ok{color:#86d4ab} .hist .flag.wait{color:var(--amber)}
+.hint{color:var(--muted);font-size:.9rem;margin:6px 0 0}
+.foot{margin:22px 4px 0;color:var(--muted);font-size:.84rem}
+
+/* ---------- sheets ---------- */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:flex-end;justify-content:center;z-index:50;padding-top:calc(env(safe-area-inset-top,0px) + 24px)}
+.dialog{width:100%;max-width:480px;background:var(--s2);border:1px solid var(--line2);border-bottom:0;border-radius:26px 26px 0 0;
+  padding:12px 18px calc(18px + env(safe-area-inset-bottom,0px));box-shadow:0 -20px 60px rgba(0,0,0,.7);max-height:100%;overflow:auto;animation:sheet .24s cubic-bezier(.2,.8,.2,1)}
+.dialog::before{content:"";display:block;width:40px;height:4px;border-radius:4px;background:#3c3c3f;margin:0 auto 14px}
+@keyframes sheet{from{transform:translateY(40px);opacity:.5}to{transform:none;opacity:1}}
+.dialog h3{font-family:var(--disp);font-weight:800;text-transform:uppercase;letter-spacing:.04em;font-size:1.6rem;line-height:1.05;margin:0 0 6px;color:var(--ink)}
+.dialog p.lead{margin:0 0 14px;color:var(--muted)}
+.field{display:block;margin:14px 0}
+.field span{display:block;font-size:.88rem;font-weight:500;color:var(--soft);margin-bottom:6px}
+.field input{width:100%;min-height:56px;padding:10px 16px;border-radius:14px;border:1px solid var(--line2);background:#070707;font-size:1.15rem}
+.field input[inputmode="decimal"]{font-family:var(--disp);font-weight:700;font-size:1.6rem;letter-spacing:.02em}
+.field input:focus{border-color:var(--gold);outline:none;box-shadow:0 0 0 3px rgba(220,187,110,.2)}
+.quick{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}
+.quick .btn{min-height:46px;padding:0 4px;font-size:.92rem;background:transparent;border-radius:12px}
+.err{color:var(--loss);font-size:.9rem;min-height:1.2em;margin-top:6px}
+.dlg-acts{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap}
+.dlg-acts .btn{flex:1}
+.tx{list-style:none;margin:8px 0 0;padding:0}
+.tx li{padding:12px 0;border-top:1px solid var(--line)}
+.tx .row{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}
+.tx .ty{font-weight:600}
+.tx .am{font-family:var(--disp);font-weight:700;font-size:1.25rem;font-variant-numeric:tabular-nums}
+.tx .when{color:var(--muted);font-size:.8rem}
+.tx .rev .am,.tx .rev .ty{text-decoration:line-through;color:var(--muted)}
+.tx .corr{font-size:.84rem;color:var(--amber);margin-top:4px}
+.tx .edit{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.tx .edit input{flex:1;min-width:120px;min-height:46px;padding:6px 12px;border-radius:12px;border:1px solid var(--gold-deep);background:#070707;font-size:1.05rem}
+.tx .rowacts{display:inline-flex}
+.tx .rowacts .link.red{color:#e38c86}
+textarea.copybox{width:100%;min-height:220px;background:#070707;color:var(--ink);border:1px solid var(--line2);border-radius:12px;padding:12px;font:inherit}
+.toast{position:fixed;left:50%;bottom:calc(var(--bar) + 14px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:#111;font-weight:600;padding:11px 20px;border-radius:999px;z-index:60;box-shadow:0 12px 30px rgba(0,0,0,.6);white-space:nowrap}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+
+
+</head>
+<body>
+<div class="wrap" id="app"></div>
+
+<script>
+(function(){
+'use strict';
+const KEY = 'wphl:v1';
+const MAX = 10;
+const nf = new Intl.NumberFormat('en-IN',{maximumFractionDigits:2,minimumFractionDigits:0});
+
+/* ---------- helpers ---------- */
+const uid = () => Math.random().toString(36).slice(2,9) + Date.now().toString(36).slice(-4);
+const esc = s => String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const money = p => '₹' + nf.format(Math.abs(p)/100);
+const signedUI = p => p>0 ? '+'+money(p) : p<0 ? '−'+money(p) : money(0);
+const signedTxt = p => p>0 ? '+'+money(p) : p<0 ? '-'+money(p) : money(0);
+const sum = a => a.reduce((s,t)=>s+t.amt,0);
+const nowIso = () => new Date().toISOString();
+const timeStr = iso => new Date(iso).toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'});
+const dateStr = iso => new Date(iso).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});
+const dtStr = iso => dateStr(iso)+', '+timeStr(iso);
+function parseAmt(str){
+  const s = String(str==null?'':str).replace(/[₹,\s]/g,'');
+  if(s==='') return null;
+  if(!/^\d+(\.\d{1,2})?$/.test(s)) return NaN;
+  return Math.round(parseFloat(s)*100);
+}
+const toInput = p => p==null ? '' : String(p/100);
+
+/* ---------- state ---------- */
+function defaultName(d){ return d.toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short',year:'numeric'}); }
+function makeGame(name){ const d=new Date(); return {id:uid(), name:name||defaultName(d), createdAt:d.toISOString(), players:[], log:[]}; }
+function fresh(){ return {v:1, updatedAt:0, current:makeGame(), history:[]}; }
+function valid(s){ return s && typeof s==='object' && s.current && Array.isArray(s.current.players) && Array.isArray(s.history); }
+function loadLocal(){ try{ const raw=localStorage.getItem(KEY); if(!raw) return null; const s=JSON.parse(raw); return valid(s)?s:null; }catch(e){ return null; } }
+let S = loadLocal() || fresh();
+let ui = { showSettle:false };
+
+/* ---------- persistence: this phone + the house database (Vercel + Upstash) ---------- */
+const SYNC_KEY = 'wphl:sync';
+let saveMode = 'local', dlCap = null, pushTimer = null, pushing = false;
+let sync = (()=>{ try{ return JSON.parse(localStorage.getItem(SYNC_KEY)) || null; }catch(e){ return null; } })()
+  || { v:0, dirty: !!(S.updatedAt) };
+function saveLocal(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); return true; }catch(e){ return false; } }
+function saveSync(){ try{ localStorage.setItem(SYNC_KEY, JSON.stringify(sync)); }catch(e){} }
+function persist(){
+  S.updatedAt = Date.now();
+  saveLocal();
+  sync.dirty = true; saveSync();
+  setSave('busy');
+  clearTimeout(pushTimer); pushTimer = setTimeout(push, 500);
+}
+async function api(method, body){
+  const r = await fetch('/api/ledger', {
+    method, cache:'no-store',
+    headers: body ? {'Content-Type':'application/json'} : {},
+    body: body ? JSON.stringify(body) : undefined
+  });
+  let data = null; try{ data = await r.json(); }catch(e){}
+  return { status: r.status, data: data || {} };
+}
+function adopt(state, v){
+  if(valid(state)){ S = state; saveLocal(); }
+  sync = { v, dirty:false }; saveSync();
+  render();
+}
+async function push(){
+  if(pushing) return;
+  pushing = true;
+  try{
+    const { status, data } = await api('PUT', { state:S, base:sync.v });
+    if(status===200){ sync = { v:data.v, dirty:false }; saveSync(); setSave('synced'); }
+    else if(status===409){ adopt(data.state, data.v); setSave('synced'); toast('Another phone saved first. Redo your last change.'); }
+    else { setSave('error', data.error); }
+  }catch(e){ setSave('offline'); setTimeout(push, 15000); }
+  finally{ pushing = false; }
+}
+async function pull(){
+  try{
+    const { status, data } = await api('GET');
+    if(status!==200){ setSave('error', data.error); return; }
+    const v = data.v || 0;
+    if(sync.dirty){
+      if(v===sync.v) push();                      // only this phone changed: send it up
+      else { adopt(data.state, v); setSave('synced'); toast('Another phone updated the ledger. Showing the latest.'); }
+    } else if(v!==sync.v && data.state){ adopt(data.state, v); setSave('synced'); }
+    else setSave('synced');
+  }catch(e){ setSave('offline'); }
+}
+function setSave(mode, detail){ saveMode=mode; saveDetail=detail||''; const el=document.getElementById('savestate'); if(el) el.outerHTML = saveHtml(); }
+let saveDetail='';
+function saveHtml(){
+  const map = {
+    synced:['ok','Saved to the house ledger'],
+    busy:['busy','Saving…'],
+    offline:['busy','Offline: saved on this phone, will sync'],
+    local:['busy','Connecting…'],
+    error:['', 'Not syncing: '+(saveDetail||'server error')]
+  };
+  const [c,t] = map[saveMode]||map.local;
+  return `<span class="savestate ${c}" id="savestate"><i></i>${esc(t)}</span>`;
+}
+function initCaps(){
+  pull();
+  window.addEventListener('online', ()=>{ sync.dirty ? push() : pull(); });
+  // pick up other phones' changes every 15 s, but never while someone is typing
+  setInterval(()=>{
+    const a=document.activeElement;
+    if(sync.dirty || document.visibilityState!=='visible' || document.querySelector('.overlay') || (a && a.tagName==='INPUT')) return;
+    pull();
+  }, 15000);
+  document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='visible') (sync.dirty ? push() : pull()); });
+}
+
+/* ---------- calculations ---------- */
+const live = (p,type) => p.tx.filter(t=>t.type===type && !t.reversed);
+function calc(p){
+  const ini = sum(live(p,'initial'));
+  const adds = live(p,'addon');
+  const add = sum(adds);
+  const fins = live(p,'final');
+  const fin = fins.length ? fins[fins.length-1].amt : null;
+  const inv = ini + add;
+  return {ini, add, adds, addN:adds.length, inv, fin, net: fin==null ? null : fin - inv};
+}
+const activePlayers = g => g.players.filter(p=>!p.removed);
+function totals(g){
+  const ps = activePlayers(g);
+  let inn=0, fs=0, entered=0;
+  const missing=[];
+  ps.forEach(p=>{ const c=calc(p); inn+=c.inv; if(c.fin!=null){ fs+=c.fin; entered++; } else missing.push(p.name); });
+  const all = ps.length>0 && entered===ps.length;
+  const diff = all ? fs-inn : null;
+  let st;
+  if(!ps.length) st={k:'empty', text:'Add players to begin'};
+  else if(!all) st={k:'await', text:'AWAITING FINAL STACKS'};
+  else if(diff===0) st={k:'ok', text:'✓ BALANCED — ALL CHIPS ACCOUNTED FOR'};
+  else if(diff<0) st={k:'short', text:`⚠️ SHORTFALL DETECTED — ${money(-diff)} UNACCOUNTED FOR`};
+  else st={k:'excess', text:`⚠️ EXCESS CHIPS DETECTED — ${money(diff)} ABOVE RECORDED BUY-INS`};
+  let adj={}, adjNote='';
+  if(st.k==='excess'){ const x=excessAdj(ps,diff); adj=x.adj; adjNote=x.note; }
+  const fin = st.k==='ok' || st.k==='excess';
+  return {ps, inn, fs, entered, all, diff, st, missing, adj, adjNote, fin};
+}
+/* Excess chips are absorbed automatically:
+   under ₹100 comes off the biggest winner; ₹100 or more is split across every player.
+   Splits use whole rupees; leftover rupees (and any paise) come off the biggest winners first. */
+function excessAdj(ps, diff){
+  const adj={}; ps.forEach(p=>adj[p.id]=0);
+  const byNet=[...ps].sort((a,b)=>calc(b).net-calc(a).net);
+  const top=byNet[0];
+  if(diff<10000){
+    adj[top.id]=-diff;
+    return {adj, note:`${money(diff)} excess taken from ${top.name}, the biggest winner`};
+  }
+  const n=ps.length, units=Math.floor(diff/100), paise=diff%100;
+  const base=Math.floor(units/n)*100, extra=units%n;
+  byNet.forEach((p,i)=>{ adj[p.id]=-(base+(i<extra?100:0)); });
+  adj[top.id]-=paise;
+  const even = !extra && !paise;
+  return {adj, note: even
+    ? `${money(diff)} excess split across all ${n} players, ${money(base)} each`
+    : `${money(diff)} excess split across all ${n} players, ${money(base)} each plus the odd rupee${extra+(paise?1:0)>1?'s':''} from the top winner${extra>1?'s':''}`};
+}
+const netAdj = (p,T) => { const n=calc(p).net; return n==null ? null : n + ((T && T.adj && T.adj[p.id])||0); };
+function settle(ps, adj){
+  const cr=[], db=[];
+  ps.forEach(p=>{ const n=calc(p).net+((adj&&adj[p.id])||0); if(n>0) cr.push({name:p.name,a:n}); else if(n<0) db.push({name:p.name,a:-n}); });
+  const pays=[];
+  // pair exact matches first: one payment settles two people
+  db.forEach(d=>{ const c=cr.find(c=>c.a>0 && c.a===d.a); if(c && d.a>0){ pays.push({from:d.name,to:c.name,amt:d.a}); c.a=0; d.a=0; } });
+  const D=db.filter(d=>d.a>0).sort((a,b)=>b.a-a.a), C=cr.filter(c=>c.a>0).sort((a,b)=>b.a-a.a);
+  let i=0,j=0;
+  while(i<D.length && j<C.length){
+    const x=Math.min(D[i].a,C[j].a);
+    pays.push({from:D[i].name,to:C[j].name,amt:x});
+    D[i].a-=x; C[j].a-=x;
+    if(D[i].a===0) i++;
+    if(C[j].a===0) j++;
+  }
+  return {pays, leftD:D.filter(d=>d.a>0), leftC:C.filter(c=>c.a>0)};
+}
+
+/* ---------- mutations ---------- */
+const G = () => S.current;
+const findP = id => G().players.find(p=>p.id===id);
+const logIt = msg => G().log.push({t:nowIso(), msg});
+const nameTaken = (name, exceptId) => activePlayers(G()).some(p=>p.id!==exceptId && p.name.trim().toLowerCase()===name.trim().toLowerCase());
+
+function addPlayer(name, amt){
+  const p={id:uid(), name:name.trim(), removed:false, tx:[{id:uid(), type:'initial', amt, t:nowIso(), reversed:false, edits:[]}]};
+  G().players.push(p);
+  logIt(`${p.name} joined with a buy-in of ${money(amt)}`);
+  commit();
+}
+function addBuyin(p, amt){
+  p.tx.push({id:uid(), type:'addon', amt, t:nowIso(), reversed:false, edits:[]});
+  logIt(`${p.name} added a buy-in of ${money(amt)}`);
+  commit();
+}
+function setFinal(p, amt){
+  const fins = live(p,'final');
+  const cur = fins.length ? fins[fins.length-1] : null;
+  if(amt==null){
+    if(cur){ cur.reversed=true; cur.rt=nowIso(); logIt(`${p.name}’s final stack of ${money(cur.amt)} was cleared (back to playing)`); commit(); }
+    return;
+  }
+  if(cur){
+    if(cur.amt===amt) return;
+    cur.edits.push({t:nowIso(), from:cur.amt, to:amt});
+    logIt(`${p.name}’s final stack corrected from ${money(cur.amt)} to ${money(amt)}`);
+    cur.amt=amt;
+  } else {
+    p.tx.push({id:uid(), type:'final', amt, t:nowIso(), reversed:false, edits:[]});
+    logIt(`${p.name} cashed out with ${money(amt)}`);
+  }
+  commit();
+}
+const TYPE = {initial:'Initial buy-in', addon:'Additional buy-in', final:'Final stack'};
+function editTx(p, t, amt){
+  if(t.amt===amt) return;
+  t.edits.push({t:nowIso(), from:t.amt, to:amt});
+  logIt(`${p.name}: ${TYPE[t.type].toLowerCase()} corrected from ${money(t.amt)} to ${money(amt)}`);
+  t.amt=amt; commit();
+}
+function reverseTx(p, t){
+  t.reversed=true; t.rt=nowIso();
+  logIt(`${p.name}: ${TYPE[t.type].toLowerCase()} of ${money(t.amt)} reversed`);
+  commit();
+}
+function archive(reason){
+  const g=G();
+  if(g.players.length || g.log.length){
+    g.closedAt=nowIso(); g.endReason=reason;
+    S.history.unshift(JSON.parse(JSON.stringify(g)));
+  }
+}
+function commit(){ persist(); render(); }
+
+/* ---------- export text ---------- */
+function summaryText(g){
+  const T=totals(g);
+  const L=[];
+  L.push('WASTED POKER HOUSE LEDGER');
+  L.push(g.name);
+  L.push('');
+  T.ps.forEach(p=>{
+    const c=calc(p); const na=netAdj(p,T); const a=(T.adj[p.id]||0);
+    L.push(p.name);
+    L.push(`  Initial buy-in: ${money(c.ini)}`);
+    L.push(`  Additional buy-ins: ${c.addN ? c.adds.map(a=>money(a.amt)).join(' + ')+' = '+money(c.add) : money(0)}`);
+    L.push(`  Total invested: ${money(c.inv)}`);
+    L.push(`  Final stack: ${c.fin==null ? 'Not entered (still playing)' : money(c.fin)}`);
+    L.push(`  Net: ${na==null ? 'Pending' : signedTxt(na)}${a?` (after ${signedTxt(a)} excess share)`:''}`);
+    L.push('');
+  });
+  L.push(`Total money in: ${money(T.inn)}`);
+  L.push(`Total final stacks: ${money(T.fs)}${T.all?'':` (${T.entered} of ${T.ps.length} entered)`}`);
+  L.push(`Game difference: ${T.all ? signedTxt(T.diff) : 'Pending'}`);
+  L.push(`Status: ${T.ps.length ? T.st.text : 'No players'}`);
+  if(T.adjNote) L.push(`Auto-adjusted: ${T.adjNote}`);
+  return L.join('\n');
+}
+function settlementText(g){
+  const T=totals(g);
+  const r=settle(T.ps,T.adj);
+  const L=[];
+  if(!T.fin) L.push('⚠️ PROVISIONAL — NOT FINAL. Ledger is not balanced.');
+  L.push(`Wasted Poker House settlement: ${g.name}`);
+  L.push('');
+  if(!r.pays.length) L.push('No payments needed.');
+  r.pays.forEach(x=>L.push(`${x.from} pays ${x.to} ${money(x.amt)}`));
+  if(r.leftC.length||r.leftD.length){
+    L.push('');
+    r.leftC.forEach(c=>L.push(`Unfunded: ${c.name} is still owed ${money(c.a)}`));
+    r.leftD.forEach(d=>L.push(`Unassigned: ${d.name} still owes ${money(d.a)}`));
+  }
+  L.push('');
+  L.push(T.st.k==='ok' ? '✓ Ledger balanced: all chips accounted for' : T.st.k==='excess' ? `Excess chips auto-adjusted: ${T.adjNote}` : `Status: ${T.st.text}`);
+  return L.join('\n');
+}
+function csvText(g){
+  const q=v=>{ const s=String(v); return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s; };
+  const n=p=>p==null?'':(p/100).toFixed(2).replace(/\.00$/,'');
+  const T=totals(g);
+  const rows=[['Wasted Poker House Ledger'],['Game',g.name],['Started',dtStr(g.createdAt)],[],
+    ['Player','Initial Buy-in','Additional Buy-ins','Add-on Count','Add-on Breakdown','Total Invested','Final Stack','Net Profit/Loss','Status']];
+  T.ps.forEach(p=>{ const c=calc(p);
+    rows.push([p.name,n(c.ini),n(c.add),c.addN,c.adds.map(a=>n(a.amt)).join(' + '),n(c.inv),c.fin==null?'NOT ENTERED':n(c.fin),c.net==null?'PENDING':n(c.net),c.fin==null?'Playing':'Cashed out']);
+  });
+  rows.push([]);
+  rows.push(['Total Money In',n(T.inn)]);
+  rows.push(['Total Final Stacks',n(T.fs),T.all?'':`${T.entered} of ${T.ps.length} entered`]);
+  rows.push(['Game Difference',T.all?n(T.diff):'PENDING']);
+  rows.push(['Status',T.st.text]);
+  rows.push([]);
+  rows.push(['Transactions']);
+  rows.push(['Time','Player','Type','Amount','State','Corrections']);
+  g.players.forEach(p=>p.tx.forEach(t=>rows.push([dtStr(t.t),p.name+(p.removed?' (removed)':''),TYPE[t.type],n(t.amt),t.reversed?'Reversed':'Active',t.edits.map(e=>`${n(e.from)} to ${n(e.to)} at ${dtStr(e.t)}`).join('; ')])));
+  return rows.map(r=>r.map(q).join(',')).join('\r\n');
+}
+const fileSafe = s => s.replace(/[^a-z0-9]+/gi,'-').replace(/^-|-$/g,'').toLowerCase() || 'game';
+
+/* ---------- copy / download ---------- */
+function toast(msg){
+  const t=document.createElement('div'); t.className='toast'; t.setAttribute('role','status'); t.textContent=msg;
+  document.body.appendChild(t); setTimeout(()=>t.remove(),1900);
+}
+async function copyText(text,label){
+  try{ await navigator.clipboard.writeText(text); toast(label+' copied'); return; }catch(e){}
+  try{
+    const ta=document.createElement('textarea'); ta.value=text; ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.select(); const ok=document.execCommand('copy'); ta.remove();
+    if(ok){ toast(label+' copied'); return; }
+  }catch(e){}
+  modal(`<h3>Copy ${esc(label.toLowerCase())}</h3><p class="lead">Your browser blocked automatic copying. Select the text below and copy it.</p>
+    <textarea class="copybox" readonly>${esc(text)}</textarea><div class="dlg-acts"><button class="btn" data-x="close">Done</button></div>`,
+    el=>{ const ta=el.querySelector('textarea'); ta.focus(); ta.select(); });
+}
+async function download(filename, text, mime){
+  if(dlCap){
+    try{ await dlCap.save({filename, data:text}); toast('Download ready'); return; }
+    catch(e){ if(e && e.code==='declined') return; }
+  }
+  try{
+    const blob=new Blob([text],{type:mime}); const url=URL.createObjectURL(blob);
+    const a=document.createElement('a'); a.href=url; a.download=filename; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),2000);
+  }catch(e){ copyText(text,'File contents'); }
+}
+
+/* ---------- modal ---------- */
+let closeModal=null;
+function modal(html, onMount){
+  if(closeModal) closeModal();
+  const ov=document.createElement('div'); ov.className='overlay';
+  ov.innerHTML=`<div class="dialog" role="dialog" aria-modal="true">${html}</div>`;
+  const prev=document.activeElement;
+  document.body.appendChild(ov);
+  const close=()=>{ ov.remove(); document.removeEventListener('keydown',onKey); closeModal=null; if(prev && prev.focus && document.contains(prev)) prev.focus(); };
+  const onKey=e=>{ if(e.key==='Escape') close(); };
+  document.addEventListener('keydown',onKey);
+  ov.addEventListener('mousedown',e=>{ if(e.target===ov) close(); });
+  ov.addEventListener('click',e=>{ if(e.target.closest('[data-x="close"]')) close(); });
+  closeModal=close;
+  const dlg=ov.querySelector('.dialog');
+  if(onMount) onMount(dlg, close);
+  const f=dlg.querySelector('[autofocus]'); if(f) f.focus();
+  return {el:dlg, close};
+}
+function confirmBox(title, msg, okLabel, danger){
+  return new Promise(res=>{
+    let done=false;
+    modal(`<h3>${esc(title)}</h3><p class="lead">${msg}</p><div class="dlg-acts">
+      <button class="btn" data-a="no">Cancel</button><button class="btn ${danger?'danger':'felt'}" data-a="yes" autofocus>${esc(okLabel)}</button></div>`,
+      (el,close)=>{
+        el.querySelector('[data-a="no"]').onclick=()=>{done=true;close();res(false);};
+        el.querySelector('[data-a="yes"]').onclick=()=>{done=true;close();res(true);};
+        const obs=new MutationObserver(()=>{ if(!document.contains(el)){ obs.disconnect(); if(!done) res(false);} });
+        obs.observe(document.body,{childList:true});
+      });
+  });
+}
+
+/* ---------- dialogs ---------- */
+function addPlayerDialog(){
+  if(activePlayers(G()).length>=MAX){ toast(`This game already has ${MAX} players`); return; }
+  modal(`<h3>Add player</h3><p class="lead">Seat ${activePlayers(G()).length+1} of ${MAX}</p>
+    <label class="field"><span>Player name</span><input id="pn" autocomplete="off" maxlength="30" autofocus></label>
+    <label class="field"><span>Initial buy-in (₹)</span><input id="pa" inputmode="decimal" autocomplete="off" placeholder="1000"></label>
+    <div class="quick">${[500,1000,2000,5000].map(v=>`<button class="btn sm" data-q="${v}">${money(v*100)}</button>`).join('')}</div>
+    <div class="err" id="perr"></div>
+    <div class="dlg-acts"><button class="btn" data-x="close">Cancel</button><button class="btn felt" id="pgo">Add player</button></div>`,
+  (el,close)=>{
+    const n=el.querySelector('#pn'), a=el.querySelector('#pa'), err=el.querySelector('#perr');
+    el.querySelectorAll('[data-q]').forEach(b=>b.onclick=()=>{ a.value=b.dataset.q; a.focus(); });
+    const go=()=>{
+      const name=n.value.trim(), amt=parseAmt(a.value);
+      if(!name){ err.textContent='Enter the player’s name.'; n.focus(); return; }
+      if(nameTaken(name)){ err.textContent='A player with this name is already in the game. Add an initial or nickname.'; n.focus(); return; }
+      if(amt==null || isNaN(amt) || amt<=0){ err.textContent='Enter a buy-in amount above ₹0, e.g. 1000.'; a.focus(); return; }
+      close(); addPlayer(name, amt);
+    };
+    el.querySelector('#pgo').onclick=go;
+    [n,a].forEach(i=>i.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); if(i===n && !a.value) a.focus(); else go(); } }));
+  });
+}
+function buyinDialog(p){
+  const c=calc(p);
+  const lastAmt = (c.adds.length ? c.adds[c.adds.length-1].amt : c.ini) || 100000;
+  const opts=[...new Set([lastAmt,50000,100000,200000])].slice(0,4);
+  modal(`<h3>Add buy-in for ${esc(p.name)}</h3><p class="lead">Invested so far: ${money(c.inv)}${c.addN?` (${c.addN} add-on${c.addN>1?'s':''})`:''}</p>
+    <label class="field"><span>Additional buy-in (₹)</span><input id="ba" inputmode="decimal" autocomplete="off" autofocus></label>
+    <div class="quick">${opts.map(v=>`<button class="btn sm" data-q="${v/100}">${money(v)}</button>`).join('')}</div>
+    <div class="err" id="berr"></div>
+    <div class="dlg-acts"><button class="btn" data-x="close">Cancel</button><button class="btn felt" id="bgo">Record buy-in</button></div>`,
+  (el,close)=>{
+    const a=el.querySelector('#ba'), err=el.querySelector('#berr');
+    el.querySelectorAll('[data-q]').forEach(b=>b.onclick=()=>{ a.value=b.dataset.q; a.focus(); });
+    const go=()=>{ const amt=parseAmt(a.value);
+      if(amt==null||isNaN(amt)||amt<=0){ err.textContent='Enter an amount above ₹0.'; a.focus(); return; }
+      close(); addBuyin(p,amt); toast(`${money(amt)} added for ${p.name}`); };
+    el.querySelector('#bgo').onclick=go;
+    a.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); go(); } });
+  });
+}
+function historyDialog(pid){
+  const p=findP(pid); if(!p) return;
+  const c=calc(p);
+  const items=[...p.tx].sort((a,b)=>a.t.localeCompare(b.t)).map(t=>`
+    <li class="${t.reversed?'rev':''}" data-tid="${t.id}">
+      <div class="row"><span class="ty">${TYPE[t.type]}</span><span class="am">${money(t.amt)}</span></div>
+      <div class="row"><span class="when">Recorded ${dtStr(t.t)}${t.reversed?`, reversed ${dtStr(t.rt)}`:''}</span>
+        ${t.reversed?'':`<span class="rowacts"><button class="link" data-e="edit">Edit</button><button class="link red" data-e="rev">Reverse</button></span>`}</div>
+      ${t.edits.map(e=>`<div class="corr">Corrected from ${money(e.from)} to ${money(e.to)} at ${dtStr(e.t)}</div>`).join('')}
+    </li>`).join('');
+  modal(`<h3>${esc(p.name)}</h3>
+    <p class="lead">Invested ${money(c.inv)}, final stack ${c.fin==null?'not counted yet':money(c.fin)}, net ${c.net==null?'pending':signedUI(c.net)}</p>
+    <ul class="tx">${items}</ul>
+    <div class="dlg-acts"><button class="btn sm" data-e="rename">Rename</button><button class="btn sm warnline" data-e="remove">Remove player</button><button class="btn sm" data-x="close">Close</button></div>`,
+  (el,close)=>{
+    el.addEventListener('click',async e=>{
+      const b=e.target.closest('[data-e]'); if(!b) return;
+      const li=b.closest('[data-tid]'); const t=li?p.tx.find(x=>x.id===li.dataset.tid):null;
+      if(b.dataset.e==='edit' && t){
+        if(li.querySelector('.edit')) return;
+        const box=document.createElement('div'); box.className='edit';
+        box.innerHTML=`<input inputmode="decimal" value="${toInput(t.amt)}" aria-label="Corrected amount"><button class="btn sm primary">Save correction</button><button class="btn sm">Cancel</button>`;
+        li.appendChild(box);
+        const inp=box.querySelector('input'); inp.focus(); inp.select();
+        const save=()=>{ const amt=parseAmt(inp.value);
+          if(amt==null||isNaN(amt)||amt<0||(t.type!=='final'&&amt===0)){ inp.classList.add('bad'); inp.style.borderColor='var(--loss)'; return; }
+          editTx(p,t,amt); historyDialog(pid); };
+        box.children[1].onclick=save; box.children[2].onclick=()=>box.remove();
+        inp.addEventListener('keydown',ev=>{ if(ev.key==='Enter') save(); });
+      }
+      if(b.dataset.e==='rev' && t){
+        const ok=await confirmBox('Reverse this entry?', `${esc(TYPE[t.type])} of ${money(t.amt)} for ${esc(p.name)} will stop counting. It stays in the history, marked reversed.`, 'Reverse entry', true);
+        if(ok){ reverseTx(p,t); } historyDialog(pid);
+      }
+      if(b.dataset.e==='rename') renameDialog(p);
+      if(b.dataset.e==='remove'){
+        const ok=await confirmBox(`Remove ${p.name}?`, 'Use this only for a player added by mistake. Their entries leave the totals but remain in the activity log.', 'Remove player', true);
+        if(ok){ p.removed=true; logIt(`${p.name} was removed from the game (had ${money(calc(p).inv)} invested)`); commit(); } else historyDialog(pid);
+      }
+    });
+  });
+}
+function renameDialog(p){
+  modal(`<h3>Rename player</h3><label class="field"><span>Name</span><input id="rn" value="${esc(p.name)}" maxlength="30" autofocus></label>
+    <div class="err" id="rerr"></div><div class="dlg-acts"><button class="btn" data-x="close">Cancel</button><button class="btn felt" id="rgo">Save name</button></div>`,
+  (el,close)=>{ const i=el.querySelector('#rn'), err=el.querySelector('#rerr'); i.select();
+    const go=()=>{ const v=i.value.trim(); if(!v){err.textContent='Enter a name.';return;} if(nameTaken(v,p.id)){err.textContent='Another player already has this name.';return;}
+      if(v!==p.name){ logIt(`${p.name} renamed to ${v}`); p.name=v; commit(); } close(); historyDialog(p.id); };
+    el.querySelector('#rgo').onclick=go; i.addEventListener('keydown',e=>{ if(e.key==='Enter') go(); }); });
+}
+function netsOf(g){
+  const T=totals(g);
+  return activePlayers(g).map(p=>({name:p.name, net:netAdj(p,T)}))
+    .sort((a,b)=>(b.net==null?-Infinity:b.net)-(a.net==null?-Infinity:a.net));
+}
+function netText(g){
+  return [g.name, ''].concat(netsOf(g).map(x=>`${x.name} ${x.net==null?'Pending':signedTxt(x.net)}`)).join('\n');
+}
+function pastGameDialog(gid){
+  const g=S.history.find(x=>x.id===gid); if(!g) return;
+  modal(`<h3>${esc(g.name)}</h3><p class="lead">Started ${dtStr(g.createdAt)}${g.closedAt?`, ${g.endReason==='reset'?'reset':'closed'} ${dtStr(g.closedAt)}`:''}</p>
+    ${netsOf(g).length?`<ul class="pays">${netsOf(g).map(x=>`<li><b class="who2">${esc(x.name)}</b><span class="net ${x.net==null?'na':x.net>0?'pos':x.net<0?'neg':'zero'}">${x.net==null?'Pending':signedUI(x.net)}</span></li>`).join('')}</ul>`:'<p class="lead">No players in this game.</p>'}
+    <div class="dlg-acts"><button class="btn sm" data-h="copy">Copy results</button><button class="btn sm" data-x="close">Close</button></div>`,
+  (el,close)=>{
+    el.addEventListener('click',async e=>{ const b=e.target.closest('[data-h]'); if(!b) return;
+      if(b.dataset.h==='copy') copyText(netText(g),'Results');
+      if(b.dataset.h==='csv') download(`wasted-poker-${fileSafe(g.name)}.csv`, csvText(g), 'text/csv');
+      if(b.dataset.h==='del'){ const ok=await confirmBox('Delete this game?', `“${esc(g.name)}” will be permanently removed from Previous games.`, 'Delete game', true);
+        if(ok){ S.history=S.history.filter(x=>x.id!==gid); commit(); toast('Game deleted'); } else pastGameDialog(gid); }
+      if(b.dataset.h==='restore'){ const ok=await confirmBox('Reopen this game?', 'The game you’re running now moves to Previous games, and this one becomes the live ledger again.', 'Reopen game', false);
+        if(ok){ archive('new'); S.history=S.history.filter(x=>x.id!==gid); delete g.closedAt; delete g.endReason; S.current=g; logIt('Game reopened from history'); commit(); toast('Game reopened'); } else pastGameDialog(gid); }
+    });
+  });
+}
+
+/* ---------- render ---------- */
+let pointerDown=false, renderQueued=false;
+document.addEventListener('pointerdown',()=>{ pointerDown=true; },true);
+document.addEventListener('pointerup',()=>{ pointerDown=false; if(renderQueued){ renderQueued=false; setTimeout(render,0); } },true);
+document.addEventListener('pointercancel',()=>{ pointerDown=false; if(renderQueued){ renderQueued=false; setTimeout(render,0); } },true);
+function render(){
+  // don't swap the DOM out from under a tap in progress (e.g. typing a stack, then tapping a button)
+  if(pointerDown){ renderQueued=true; return; }
+  const app=document.getElementById('app');
+  const ae=document.activeElement;
+  const focusKey = ae && ae.dataset ? ae.dataset.fk : null;
+  const g=G(), T=totals(g);
+  const full = T.ps.length>=MAX;
+
+  const rows = T.ps.map((p,i)=>{
+    const c=calc(p);
+    const done = c.fin!=null;
+    const na = netAdj(p,T), aj = T.adj[p.id]||0;
+    const netCls = na==null?'na':na>0?'pos':na<0?'neg':'zero';
+    return `<div class="prow ${done?'done':''}">
+      <div class="p-who"><span class="seat ${done?'done':''}" aria-hidden="true">${i+1}</span>
+        <div style="min-width:0"><button class="pname" data-act="hist" data-id="${p.id}" aria-label="${esc(p.name)}: open history">${esc(p.name)}</button>
+        <span class="state ${done?'done':''}">${done?'Cashed out':'Playing'}</span></div></div>
+      <div class="p-figs"><div class="p-fig p-ini" data-l="Buy-in">${money(c.ini)}</div>
+      <div class="p-fig p-add" data-l="Add-ons">${money(c.add)}${c.addN?`<small>×${c.addN}</small>`:''}</div>
+      <div class="p-fig p-inv" data-l="Invested">${money(c.inv)}</div></div>
+      <div class="p-fin"><span class="cur" aria-hidden="true">₹</span><input class="stack ${done?'set':''}" data-act="final" data-id="${p.id}" data-fk="f-${p.id}" inputmode="decimal" enterkeyhint="done" autocomplete="off"
+        placeholder="Final stack" value="${toInput(c.fin)}" aria-label="Final stack for ${esc(p.name)}"></div>
+      <div class="p-net"><span class="netv ${netCls}">${na==null?'Pending':signedUI(na)}</span>${aj?`<small class="adjn">incl. ${signedUI(aj)} excess</small>`:''}</div>
+      <div class="p-act"><button class="btn sm" data-act="buyin" data-id="${p.id}" data-fk="b-${p.id}" aria-label="Add buy-in for ${esc(p.name)}"><span class="plus">+</span> Buy-in</button>
+        <button class="link" data-act="hist" data-id="${p.id}">History</button></div>
+    </div>`;
+  }).join('');
+
+  const totIni=T.ps.reduce((s,p)=>s+calc(p).ini,0), totAdd=T.ps.reduce((s,p)=>s+calc(p).add,0);
+  const ledger = T.ps.length ? `
+    <div class="lhead" aria-hidden="true"><span>Player</span><span>Initial buy-in</span><span>Add-ons</span><span>Total invested</span><span>Final stack</span><span>Net</span><span></span></div>
+    ${rows}
+    <div class="prow ptot">
+      <div class="p-who">Table totals</div>
+      <div class="p-figs"><div class="p-fig p-ini" data-l="Money in">${money(T.inn)}</div>
+      <div class="p-fig p-add" data-l="Add-ons">${money(totAdd)}</div>
+      <div class="p-fig p-inv" data-l="Final stacks">${money(T.fs)}${T.all?'':`<small>${T.entered}/${T.ps.length}</small>`}</div></div>
+      <div class="p-net"><span class="netv ${T.all?(T.diff>0?'pos':T.diff<0?'neg':'zero'):'na'}">${T.all?signedUI(T.diff):'Pending'}</span></div>
+    </div>` : `<div class="empty-state"><h2>The table is empty</h2><p>Tap Add Player to seat your first player with their opening buy-in.</p></div>`;
+
+  let settleHtml='';
+  if(ui.showSettle){
+    let body='';
+    if(!T.ps.length) body=`<div class="note wait">Add players and their final stacks first.</div>`;
+    else if(!T.all) body=`<div class="note wait">Settlement opens once every stack is counted. Still waiting on <b>${T.missing.map(esc).join(', ')}</b>.</div>`;
+    else {
+      const r=settle(T.ps,T.adj);
+      const list = r.pays.length ? `<ul class="pays">${r.pays.map(x=>`<li><span class="who2"><b>${esc(x.from)}</b> pays <b>${esc(x.to)}</b></span><span class="amt2">${money(x.amt)}</span></li>`).join('')}</ul>` : `<p class="hint">Everyone broke even. No payments needed.</p>`;
+      const left = (r.leftC.length||r.leftD.length) ? `<div class="note bad">${r.leftC.map(c=>`${esc(c.name)} is still owed ${money(c.a)} with no one left to pay it.`).concat(r.leftD.map(d=>`${esc(d.name)} still owes ${money(d.a)} with no one left to receive it.`)).join('<br>')}</div>` : '';
+      body = (T.fin
+        ? `<div class="note good">${T.st.k==='excess'?`${esc(T.adjNote)}. `:''}The books balance. ${r.pays.length} payment${r.pays.length===1?'':'s'} settle${r.pays.length===1?'s':''} the night.</div>`
+        : `<div class="note bad"><b>Provisional, not final.</b> ${esc(T.st.text)}. Correct the discrepancy before anyone pays.</div>`)
+        + list + left
+        + (r.pays.length?`<button class="btn wide ${T.fin?'gold':''}" style="margin-top:8px" data-act="copysettle">${T.fin?'Copy Settlement':'Copy provisional settlement'}</button>`:'')
+        + (T.fin?`<button class="btn wide felt" style="margin-top:10px" data-act="finish">Finish Game</button>`:'');
+    }
+    settleHtml=`<section class="panel settle" id="settle" aria-live="polite"><div class="head"><h2>Settlement</h2><button class="link" data-act="hidesettle">Hide</button></div>${body}</section>`;
+  }
+
+  const hist = S.history;
+  const histHtml = `<details class="panel"><summary><h2>Previous games</h2><span class="tw">${hist.length||'None yet'}</span></summary>
+    ${hist.length?`<ul class="hist">${hist.map(h=>{ const t=totals(h);
+      const flag=t.st.k==='ok'?['ok','Balanced']:t.st.k==='excess'?['ok','Excess split']:t.st.k==='await'?['wait','Unfinished']:t.st.k==='empty'?['wait','Empty']:['bad','Didn’t balance'];
+      return `<li><div><span class="gname">${esc(h.name)}</span><span class="flag ${flag[0]}">${flag[1]}${h.endReason==='reset'?', reset':''}</span>
+        <div class="meta">${t.ps.length} player${t.ps.length===1?'':'s'}, ${money(t.inn)} in play</div></div>
+        <button class="btn xs" data-act="past" data-id="${h.id}">View</button></li>`; }).join('')}</ul>`
+      :'<p class="hint">Games are saved here when you tap Finish Game.</p>'}</details>`;
+
+  app.innerHTML = `
+  <header class="top">
+    <div class="brand"><span class="mark" aria-hidden="true">♠</span><h1>Wasted Poker House<span>Ledger</span></h1></div>
+    <div class="subbar">
+      <div class="gameinfo"><input class="gamename" data-act="gname" data-fk="gname" value="${esc(g.name)}" aria-label="Game name" maxlength="60">${saveHtml()}</div>
+    </div>
+    <div class="session">
+      <button class="btn xs goldline" data-act="finish" ${T.ps.length?'':'disabled'}>Finish Game</button>
+      <button class="btn xs warnline" data-act="reset">Reset</button>
+    </div>
+  </header>
+
+  <section class="table ${T.st.k==='excess'?'adj':T.st.k}" aria-label="Chip reconciliation">
+    <div class="figs">
+      <div class="fig"><div class="k">Money in</div><div class="v">${money(T.inn)}</div><div class="s">${T.ps.length} player${T.ps.length===1?'':'s'}</div></div>
+      <div class="fig mid"><div class="k">Game difference</div><div class="v ${T.all?'':'pend'}">${T.all?signedUI(T.diff):'Pending'}</div></div>
+      <div class="fig"><div class="k">Final stacks</div><div class="v">${money(T.fs)}</div><div class="s">${T.ps.length?`${T.entered} of ${T.ps.length} counted`:'None counted'}</div></div>
+    </div>
+    <div class="print" role="status"><div class="st">${esc(T.st.text)}</div>${T.st.k==='await'?`<small>Waiting on ${T.missing.map(esc).join(', ')}</small>`:''}${T.st.k==='short'?'<small>Recorded amounts don’t add up. Recheck chip counts and buy-ins.</small>':''}${T.st.k==='excess'?`<small>Auto-adjusted: ${esc(T.adjNote)}.</small>`:''}</div>
+  </section>
+
+  <div class="dock"><div class="dock-in">
+    <button class="btn felt" data-act="add" ${full?'disabled':''}>${full?'Table full':'<span class="plus">+</span> Add Player'}</button>
+    <button class="btn gold" data-act="settle" ${T.ps.length?'':'disabled'}>Calculate Settlement</button>
+  </div></div>
+
+  <div class="sect"><h2>Players</h2><span>${T.ps.length} of ${MAX} seats</span></div>
+  <section class="ledger" aria-label="Player ledger">${ledger}</section>
+  ${T.ps.length?`<div class="under"><button class="btn sm" data-act="copysum">Copy Summary</button></div>`:''}
+  ${settleHtml}
+  ${histHtml}
+
+  <p class="foot">Leave a final stack blank while the player is still in. Enter 0 for a player who busted. Tap a name to correct or reverse an entry.</p>`;
+
+  if(focusKey){ const el=app.querySelector(`[data-fk="${focusKey}"]`); if(el){ el.focus(); if(el.select && el.tagName==='INPUT' && el.dataset.act==='final') el.select(); } }
+}
+
+/* ---------- events ---------- */
+const app=document.getElementById('app');
+let pendingFocus=null;
+function commitFinal(inp){
+  const p=findP(inp.dataset.id); if(!p) return;
+  const amt=parseAmt(inp.value);
+  if(amt!=null && (isNaN(amt)||amt<0)){ inp.classList.add('bad'); toast('Enter a number like 2500, or leave blank'); return; }
+  inp.classList.remove('bad');
+  setFinal(p, amt);
+}
+app.addEventListener('change',e=>{
+  const t=e.target;
+  if(t.dataset.act==='final'){
+    // defer so focus can move first (Tab), then render restores it
+    setTimeout(()=>commitFinal(t),0);
+  }
+  if(t.dataset.act==='gname'){ const v=t.value.trim()||defaultName(new Date(G().createdAt)); if(v!==G().name){ G().name=v; persist(); } t.value=v; }
+});
+app.addEventListener('keydown',e=>{
+  const t=e.target;
+  if(e.key==='Enter' && (t.dataset.act==='final'||t.dataset.act==='gname')){ e.preventDefault(); t.blur(); }
+});
+app.addEventListener('input',e=>{
+  const t=e.target;
+  if(t.dataset.act==='final'){ const a=parseAmt(t.value); t.classList.toggle('bad', a!=null && (isNaN(a)||a<0)); }
+});
+app.addEventListener('click',async e=>{
+  const b=e.target.closest('[data-act]'); if(!b || b.tagName==='INPUT') return;
+  const g=G(), act=b.dataset.act;
+  if(act==='add') addPlayerDialog();
+  else if(act==='buyin'){ const p=findP(b.dataset.id); if(p) buyinDialog(p); }
+  else if(act==='hist') historyDialog(b.dataset.id);
+  else if(act==='settle'){ ui.showSettle=true; render(); const s=document.getElementById('settle'); if(s && s.scrollIntoView) s.scrollIntoView({behavior:'smooth',block:'nearest'}); }
+  else if(act==='hidesettle'){ ui.showSettle=false; render(); }
+  else if(act==='copysettle') copyText(settlementText(g),'Settlement');
+  else if(act==='copysum') copyText(summaryText(g),'Summary');
+  else if(act==='csv') download(`wasted-poker-${fileSafe(g.name)}.csv`, csvText(g), 'text/csv');
+  else if(act==='past') pastGameDialog(b.dataset.id);
+  else if(act==='finish'){
+    const T=totals(g);
+    if(!T.ps.length){ toast('Add players before finishing a game'); return; }
+    if(!T.all){
+      modal(`<h3>Can’t finish yet</h3><p class="lead">Enter final stacks for ${esc(T.missing.join(', '))} first. A finished game is saved permanently and can’t be changed.</p><div class="dlg-acts"><button class="btn felt" data-x="close" autofocus>OK</button></div>`);
+      return;
+    }
+    const warn = T.st.k==='short' ? `<br><br><b style="color:var(--loss)">${esc(T.st.text)}.</b> The shortfall will be saved as is.` : '';
+    const ok = await confirmBox('Finish this game?', `“${esc(g.name)}” will be saved to Previous games and a fresh game will start. Saved games can’t be edited or deleted.${warn}`, 'Finish game', false);
+    if(ok){ archive('finished'); S.current=makeGame(); ui.showSettle=false; commit(); toast('Game saved to Previous games'); }
+  }
+  else if(act==='reset'){
+    if(!g.players.length && !g.log.length){ toast('This game is already empty'); return; }
+    const ok=await confirmBox('Reset this game?', 'All players and entries will be cleared. This game will not be saved to Previous games.', 'Reset game', true);
+    if(ok){ S.current=makeGame(g.name); ui.showSettle=false; commit(); toast('Game reset'); }
+  }
+  else if(act==='export'){ const d=new Date(); download(`wasted-poker-backup-${d.toISOString().slice(0,10)}.json`, JSON.stringify(S,null,1), 'application/json'); }
+  else if(act==='import') document.getElementById('importFile').click();
+});
+
+render();
+initCaps();
+})();
+</script>
+</body>
+</html>
